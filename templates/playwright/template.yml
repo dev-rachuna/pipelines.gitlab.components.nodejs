@@ -1,0 +1,111 @@
+---
+spec:
+  description: "Uruchamia testy end-to-end Playwright i publikuje raporty oraz artefakty testowe."
+  component: [name, version, reference]
+  inputs:
+    job-name:
+      type: string
+      default: playwright-e2e
+      description: "Nazwa joba uruchamiającego testy Playwright."
+    job-stage:
+      default: tests
+      description: "Etap pipeline, na którym zostanie uruchomiony job z testami Playwright."
+      options: [".pre", "prepare", "validate", "dependency", "build", "deployment", "tests", "publish", ".post"]
+    job-image:
+      description: "Obraz kontenera zawierający środowisko Node.js i przeglądarki wymagane przez Playwright."
+      type: string
+      default: registry.gitlab.com/dev.rachuna/artifacts/containers/playwright:1.0.0
+    job-rules:
+      description: "Reguły GitLab CI określające, kiedy job zostanie dodany do pipeline."
+      type: array
+      default:
+        - when: on_success
+    job-needs:
+      description: "Lista zależności GitLab CI przekazywana do pola needs joba."
+      type: array
+      default: []
+    job-resource-group:
+      description: "Nazwa grupy zasobów ograniczającej równoległe uruchamianie testów."
+      type: string
+      default: "${CI_PIPELINE_ID}-${CI_JOB_NAME}"
+    job-before-script:
+      description: "Dodatkowy skrypt wykonywany po instalacji zależności, przed uruchomieniem testów."
+      type: string
+      default: ":"
+    job-after-script:
+      description: "Dodatkowy skrypt wykonywany w sekcji after_script po zakończeniu testów."
+      type: string
+      default: ":"
+    job-install-dependency:
+      type: boolean
+      default: false
+      description: "Określa, czy przed instalacją zależności zainstalować globalnie najnowszy pakiet @playwright/cli."
+    job-external-repository-fullpath:
+      type: string
+      default: ""
+      description: "Pełna ścieżka namespace/projekt repozytorium GitLab zawierającego testy Playwright; pusta wartość uruchamia testy z bieżącego projektu."
+    job-external-repository-ref:
+      type: string
+      default: "feat/init"
+      description: "Nazwa gałęzi, tagu lub innego refa używanego podczas klonowania zewnętrznego repozytorium testów."
+---
+"$[[ inputs.job-name ]]":
+  image: "$[[ inputs.job-image ]]"
+  stage: "$[[ inputs.job-stage ]]"
+  rules: "$[[ inputs.job-rules ]]"
+  needs: "$[[ inputs.job-needs ]]"
+  artifacts:
+    when: always
+    paths:
+      - playwright-report/
+      - test-results/
+      - .playwright-external-repository/playwright-report/
+      - .playwright-external-repository/test-results/
+    reports:
+      junit: test-results/results.xml
+  cache: {}
+  # cache:
+  #   key:
+  #     files:
+  #       - package-lock.json
+  #   paths:
+  #     - node_modules/
+  resource_group: "$[[ inputs.job-resource-group ]]"
+  variables:
+    GITLAB_CI_COMPONENTS_PATH: dev.rachuna/pipelines/gitlab/components/bootstrap
+    CONVENTIONAL_COMMITS_REGEXP: ^(build|chore|ci|docs|feat|fix|perf|refactor|style|test|revert|merge|release|hotfix|fixup|squash|wip|BREAKING CHANGE)(\([a-zA-Z0-9_-]+\))?!?:\s.+$
+    GITLAB_CI_COMPONENTS_VERSION: "$[[ component.reference ]]"
+    DOCS_MD_FILE_PATH: templates/conventional-commits/README.md
+    NODE_EXTRA_CA_CERTS: /etc/ssl/certs/ca-certificates.crt
+    PLAYWRIGHT_INSTALL_DEPENDENCY: "$[[ inputs.job-install-dependency ]]"
+    PLAYWRIGHT_EXTERNAL_REPOSITORY_FULLPATH: "$[[ inputs.job-external-repository-fullpath ]]"
+    PLAYWRIGHT_EXTERNAL_REPOSITORY_REF: "$[[ inputs.job-external-repository-ref ]]"
+    PLAYWRIGHT_JUNIT_OUTPUT_FILE: "${CI_PROJECT_DIR}/test-results/results.xml"
+  extends:
+    - .before_script
+    - .after_script
+  before_script:
+    - !reference [.before_script, before_script]
+    - |
+      if [[ -n "$PLAYWRIGHT_EXTERNAL_REPOSITORY_FULLPATH" ]]; then
+        glab repo clone "$PLAYWRIGHT_EXTERNAL_REPOSITORY_FULLPATH" \
+          "${CI_PROJECT_DIR}/.playwright-external-repository" \
+          -- \
+          --branch $PLAYWRIGHT_EXTERNAL_REPOSITORY_REF
+        cd "${CI_PROJECT_DIR}/.playwright-external-repository"
+      fi
+
+      if [[ "$PLAYWRIGHT_INSTALL_DEPENDENCY" == "true" ]]; then
+        npm i -g @playwright/cli@latest
+      fi
+      npm ci
+    - $[[ inputs.job-before-script ]]
+  script:
+    - |
+      if [[ -n "$PLAYWRIGHT_EXTERNAL_REPOSITORY_FULLPATH" ]]; then
+        cd "${CI_PROJECT_DIR}/.playwright-external-repository"
+      fi
+      npx playwright test --reporter=list,junit,html
+  after_script:
+    - !reference [.after_script, after_script]
+    - $[[ inputs.job-after-script ]]

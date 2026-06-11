@@ -1,0 +1,5 @@
+---
+include:
+  - project: 'dev.rachuna/pipelines/gitlab/gitlab-ci'
+    file: '.gitlab-ci.yml'
+    ref: feat/init

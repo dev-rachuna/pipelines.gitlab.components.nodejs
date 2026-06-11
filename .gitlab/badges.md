@@ -1,0 +1,8 @@
+![GitLab Stars](https://img.shields.io/gitlab/stars/dev.rachuna/pipelines/gitlab/components/nodejs)
+![GitLab Forks](https://img.shields.io/gitlab/forks/dev.rachuna/pipelines/gitlab/components/nodejs)
+![Repository Type](https://img.shields.io/badge/Repository%20type-gitlab%20components-orange)
+![GitLab Release](https://img.shields.io/gitlab/v/release/dev.rachuna/pipelines/gitlab/components/nodejs)
+![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/dev.rachuna/pipelines/gitlab/components/nodejs)
+![GitLab Issues](https://img.shields.io/gitlab/issues/open/dev.rachuna/pipelines/gitlab/components/nodejs)
+![GitLab Merge Requests](https://img.shields.io/gitlab/merge-requests/open/dev.rachuna/pipelines/gitlab/components/nodejs)
+![GitLab Contributors](https://img.shields.io/gitlab/contributors/dev.rachuna/pipelines/gitlab/components/nodejs)
