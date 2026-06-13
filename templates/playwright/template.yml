@@ -10,7 +10,7 @@ spec:
     job-stage:
       default: tests
       description: "Etap pipeline, na którym zostanie uruchomiony job z testami Playwright."
-      options: [".pre", "prepare", "validate", "dependency", "build", "deployment", "tests", "publish", ".post"]
+      options: [".pre", "prepare", "dependency", "validate", "build", "deployment", "tests", "publish", ".post"]
     job-image:
       description: "Obraz kontenera zawierający środowisko Node.js i przeglądarki wymagane przez Playwright."
       type: string
@@ -73,9 +73,8 @@ spec:
   resource_group: "$[[ inputs.job-resource-group ]]"
   variables:
     GITLAB_CI_COMPONENTS_PATH: dev.rachuna/pipelines/gitlab/components/bootstrap
-    CONVENTIONAL_COMMITS_REGEXP: ^(build|chore|ci|docs|feat|fix|perf|refactor|style|test|revert|merge|release|hotfix|fixup|squash|wip|BREAKING CHANGE)(\([a-zA-Z0-9_-]+\))?!?:\s.+$
     GITLAB_CI_COMPONENTS_VERSION: "$[[ component.reference ]]"
-    DOCS_MD_FILE_PATH: templates/conventional-commits/README.md
+    DOCS_MD_FILE_PATH: templates/$[[ component.name ]]/README.md
     NODE_EXTRA_CA_CERTS: /etc/ssl/certs/ca-certificates.crt
     PLAYWRIGHT_INSTALL_DEPENDENCY: "$[[ inputs.job-install-dependency ]]"
     PLAYWRIGHT_EXTERNAL_REPOSITORY_FULLPATH: "$[[ inputs.job-external-repository-fullpath ]]"
@@ -86,17 +85,16 @@ spec:
     - .after_script
   before_script:
     - !reference [.before_script, before_script]
-    - |
+    - | # install playwright
+      if [[ "$PLAYWRIGHT_INSTALL_DEPENDENCY" == "true" ]]; then
+        npm i -g @playwright/cli@latest
+      fi
+    - | 
       if [[ -n "$PLAYWRIGHT_EXTERNAL_REPOSITORY_FULLPATH" ]]; then
         glab repo clone "$PLAYWRIGHT_EXTERNAL_REPOSITORY_FULLPATH" \
           "${CI_PROJECT_DIR}/.playwright-external-repository" \
-          -- \
-          --branch $PLAYWRIGHT_EXTERNAL_REPOSITORY_REF
+          -- --branch $PLAYWRIGHT_EXTERNAL_REPOSITORY_REF
         cd "${CI_PROJECT_DIR}/.playwright-external-repository"
-      fi
-
-      if [[ "$PLAYWRIGHT_INSTALL_DEPENDENCY" == "true" ]]; then
-        npm i -g @playwright/cli@latest
       fi
       npm ci
     - $[[ inputs.job-before-script ]]
