@@ -1,53 +1,53 @@
 ---
 spec:
-  description: "Uruchamia testy end-to-end Playwright i publikuje raporty oraz artefakty testowe."
+  description: "Instaluje zależności, uruchamia testy end-to-end Playwright oraz publikuje raporty JUnit i HTML wraz z artefaktami testowymi."
   component: [name, version, reference]
   inputs:
     job-name:
       type: string
       default: playwright-e2e
-      description: "Nazwa joba uruchamiającego testy Playwright."
+      description: "Nazwa joba GitLab CI uruchamiającego testy Playwright."
     job-stage:
       default: tests
-      description: "Etap pipeline, na którym zostanie uruchomiony job z testami Playwright."
+      description: "Etap pipeline GitLab CI, w którym zostanie uruchomiony job z testami Playwright."
       options: [".pre", "prepare", "dependency", "validate", "build", "deployment", "tests", "publish", ".post"]
     job-image:
-      description: "Obraz kontenera zawierający środowisko Node.js i przeglądarki wymagane przez Playwright."
+      description: "Obraz kontenera joba zawierający Node.js oraz przeglądarki wymagane przez Playwright."
       type: string
       default: registry.gitlab.com/dev.rachuna/artifacts/containers/playwright:1.0.0
     job-rules:
-      description: "Reguły GitLab CI określające, kiedy job zostanie dodany do pipeline."
+      description: "Reguły GitLab CI przekazywane do pola rules, określające warunki dodania joba do pipeline."
       type: array
       default:
         - when: on_success
     job-needs:
-      description: "Lista zależności GitLab CI przekazywana do pola needs joba."
+      description: "Lista zależności przekazywana do pola needs joba GitLab CI."
       type: array
       default: []
     job-resource-group:
-      description: "Nazwa grupy zasobów ograniczającej równoległe uruchamianie testów."
+      description: "Nazwa grupy zasobów przekazywana do resource_group i ograniczająca równoległe uruchamianie joba."
       type: string
       default: "${CI_PIPELINE_ID}-${CI_JOB_NAME}"
     job-before-script:
-      description: "Dodatkowy skrypt wykonywany po instalacji zależności, przed uruchomieniem testów."
+      description: "Dodatkowy skrypt wykonywany po npm ci, bezpośrednio przed uruchomieniem testów."
       type: string
       default: ":"
     job-after-script:
-      description: "Dodatkowy skrypt wykonywany w sekcji after_script po zakończeniu testów."
+      description: "Dodatkowy skrypt wykonywany w after_script po zakończeniu testów i skryptu bootstrap."
       type: string
       default: ":"
     job-install-dependency:
       type: boolean
       default: false
-      description: "Określa, czy przed instalacją zależności zainstalować globalnie najnowszy pakiet @playwright/cli."
+      description: "Określa, czy przed npm ci zainstalować globalnie najnowszą wersję pakietu @playwright/cli."
     job-external-repository-fullpath:
       type: string
       default: ""
-      description: "Pełna ścieżka namespace/projekt repozytorium GitLab zawierającego testy Playwright; pusta wartość uruchamia testy z bieżącego projektu."
+      description: "Pełna ścieżka namespace/projekt zewnętrznego repozytorium GitLab z testami; pusta wartość uruchamia testy z bieżącego projektu."
     job-external-repository-ref:
       type: string
       default: "feat/init"
-      description: "Nazwa gałęzi, tagu lub innego refa używanego podczas klonowania zewnętrznego repozytorium testów."
+      description: "Gałąź, tag lub inny ref klonowany z repozytorium wskazanego przez job-external-repository-fullpath."
 ---
 "$[[ inputs.job-name ]]":
   image: "$[[ inputs.job-image ]]"
